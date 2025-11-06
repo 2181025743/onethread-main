@@ -1,0 +1,44 @@
+onethread:
+  nacos:
+    group: DEFAULT_GROUP
+  config-file-type: yaml
+  web:
+    core-pool-size: 10
+    maximum-pool-size: 200
+    keep-alive-time: 60
+    notify:
+      receives: xxx
+  notify-platforms:
+    platform: DING
+    url: 钉钉机器人完整Webhook，比如：https://oapi.dingtalk.com/robot/send?access_token=xxx
+  executors:
+    - thread-pool-id: onethread-producer
+      core-pool-size: 12
+      maximum-pool-size: 24
+      keep-alive-time: 19999
+      work-queue: ResizableCapacityLinkedBlockingQueue
+      queue-capacity: 10000
+      rejected-handler: CallerRunsPolicy
+      allow-core-thread-time-out: false
+      notify:
+        receives: xxx
+        interval: 5
+      alarm:
+        enable: true
+        queue-threshold: 80
+        active-threshold: 80
+    - thread-pool-id: onethread-consumer
+      core-pool-size: 10
+      maximum-pool-size: 20
+      keep-alive-time: 9999
+      work-queue: LinkedBlockingQueue
+      queue-capacity: 1024
+      rejected-handler: AbortPolicy
+      allow-core-thread-time-out: true
+      notify:
+        receives: xxx
+        interval: 5
+      alarm:
+        enable: true
+        queue-threshold: 80
+        active-threshold: 80

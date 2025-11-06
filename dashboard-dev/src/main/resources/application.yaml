@@ -1,0 +1,43 @@
+server:
+  port: 19890
+
+spring:
+  application:
+    name: onethread-dashboard
+
+onethread:
+  users: # 避免再使用数据库，用户名直接固定写到配置文件
+    - admin,admin
+    - test,test
+  nacos:
+    server-addr: http://43.139.76.84:8848
+    namespace: onethread-dev
+    username: nacos
+    password: A1472580369Z
+  user-login:
+    exclude:
+      interfaces: |-
+        /api/onethread-dashboard/auth/login
+  namespaces: # 需要从 Nacos 中读取以下命名空间（自定义）配置文件检索动态线程池
+    - public
+    - onethread-dev
+    - framework
+    - common
+    - test
+    - prod
+  default-namespace: onethread-dev  # 默认查询的 namespace，快速模式下使用
+  quick-mode: true                   # 快速模式：只查询默认 namespace，提升查询性能
+  grafana:
+    # 如果本地有安装 Grafana 展示，可以替换为本地路径
+    url: http://grafana.nageoffer.com/d/gxBvKxYNz/7adffa3?orgId=1&from=now-6h&to=now&timezone=browser&var-application_name=nacos-cloud-example&var-dynamic_thread_pool_id=onethread-consumer&refresh=5s&theme=light&kiosk=true
+
+sa-token:
+  token-name: token                      # 请求头中的 token 名称
+  is-concurrent: true                    # 允许同一账号多地同时登录
+  is-share: true                         # 多人登录公用一个 token
+  is-read-body: true                     # 支持从 body 读取 token
+  is-read-header: true                   # 支持从 header 读取 token
+  is-read-cookie: false                  # 禁用从 cookie 读取 token（可选）
+  is-log: false                          # 关闭操作日志输出
+  is-color-log: false                    # 关闭打印彩色日志
+  is-print: false                        # 关闭控制台打印版本字符画日志

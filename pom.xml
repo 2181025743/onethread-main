@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.nageoffer.onethread</groupId>
+    <artifactId>onethread-all</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <description>
+        🎉️oneThread 动态线程池基础组件项目。实现线程池参数的动态调整、运行时监控与异常告警等增强功能，帮助开发者掌握组件设计与并发编程核心知识。无论是校招还是社招，该项目都是面试中极具含金量的实战加分项。🥳️
+        ————项目代码设计大部分来自马哥开源的动态线程池 Hippo4j（https://github.com/opengoofy/hippo4j），如果大家学习
+        oneThread 后想要查看进阶内容，欢迎学习。
+    </description>
+
+    <developers>
+        <developer>
+            <name>马丁</name>
+            <email>machen@apache.org</email>
+            <url>https://github.com/magestacks</url>
+            <organization>Apache, openGoofy, and nageoffer</organization>
+            <organizationUrl>https://nageoffer.com</organizationUrl>
+        </developer>
+    </developers>
+
+    <modules>
+        <!-- 动态线程池核心模块包，实现动态线程池相关基础类定义 -->
+        <module>core</module>
+        <!-- 动态线程池基础模块包，包含Spring扫描动态线程池、是否启用以及Banner打印等 -->
+        <module>spring-base</module>
+        <!-- 动态线程池配置中心组件包，实现线程池结合Spring框架和配置中心动态刷新 -->
+        <module>starter</module>
+        <!-- 动态线程池示例包，演示线程池动态参数变更、监控和告警等功能 -->
+        <module>example</module>
+        <!-- 应广大同学要求，以后每个项目尽量有前端页面方便查看和调试 -->
+        <!-- 注意，oneThread 是基于配置中心的基础组件，正常不应该有控制台，所以这个模块不应该应用到生产环境 -->
+        <module>dashboard-dev</module>
+    </modules>
+
+    <properties>
+        <java.version>17</java.version>
+        <spring-boot.version>3.0.7</spring-boot.version>
+        <spring-cloud.version>2022.0.3</spring-cloud.version>
+        <spring-cloud-alibaba.version>2022.0.0.0-RC2</spring-cloud-alibaba.version>
+        <hutool-all.version>5.8.37</hutool-all.version>
+        <apollo-client-config-data.version>2.4.0</apollo-client-config-data.version>
+        <fastjson2.version>2.0.57</fastjson2.version>
+        <spotless-maven-plugin.version>2.22.1</spotless-maven-plugin.version>
+        <maven-compiler-plugin.version>3.6.1</maven-compiler-plugin.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.alibaba.cloud</groupId>
+                <artifactId>spring-cloud-alibaba-dependencies</artifactId>
+                <version>${spring-cloud-alibaba.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>cn.hutool</groupId>
+                <artifactId>hutool-all</artifactId>
+                <version>${hutool-all.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.ctrip.framework.apollo</groupId>
+                <artifactId>apollo-client-config-data</artifactId>
+                <version>${apollo-client-config-data.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.alibaba.fastjson2</groupId>
+                <artifactId>fastjson2</artifactId>
+                <version>${fastjson2.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven-compiler-plugin.version}</version>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <version>${spotless-maven-plugin.version}</version>
+                <configuration>
+                    <java>
+                        <licenseHeader>
+                            <!-- ${maven.multiModuleProjectDirectory} 爆红属于正常，并不影响编译或者运行，忽略就好 -->
+                            <file>${maven.multiModuleProjectDirectory}/copyright/copyright.txt</file>
+                        </licenseHeader>
+                    </java>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>apply</goal>
+                        </goals>
+                        <phase>compile</phase>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
