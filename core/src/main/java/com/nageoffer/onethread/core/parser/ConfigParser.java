@@ -39,34 +39,83 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 配置解析器接口抽象
+ * 配置解析器接口
  * <p>
- * 作者：杨潇
- * 开发时间：2025-04-23
+ * 该接口定义了配置文件解析的统一规范，用于将不同格式的配置文件（YAML、Properties等）
+ * 解析为统一的键值对结构，方便后续的配置绑定和参数提取。
+ * 
+ * <p><b>核心职责：</b>
+ * <ul>
+ *   <li>定义配置文件解析的标准方法</li>
+ *   <li>支持多种配置文件格式的扩展</li>
+ *   <li>提供格式支持判断能力</li>
+ * </ul>
+ * 
+ * <p><b>设计模式：</b>策略模式（Strategy Pattern）
+ * <br>不同的实现类代表不同的解析策略（如 YamlConfigParser、PropertiesConfigParser）
+ * 
+ * <p><b>使用示例：</b>
+ * <pre>{@code
+ * ConfigParser parser = new YamlConfigParser();
+ * if (parser.supports(ConfigFileTypeEnum.YAML)) {
+ *     Map<Object, Object> config = parser.doParse(yamlContent);
+ * }
+ * }</pre>
+ * 
+ * @author 杨潇
+ * @since 2025-04-23
+ * @see YamlConfigParser YAML格式解析器实现
+ * @see PropertiesConfigParser Properties格式解析器实现
+ * @see ConfigParserHandler 解析器管理器
  */
 public interface ConfigParser {
 
     /**
-     * 判断是否支持指定类型的配置文件解析
+     * 判断当前解析器是否支持指定类型的配置文件解析
+     * <p>
+     * 该方法用于运行时判断解析器能力，支持解析器的动态选择。
+     * 通常在 {@link ConfigParserHandler} 中用于选择合适的解析器。
      *
-     * @param type 配置文件类型枚举
-     * @return 是否支持该类型
+     * @param type 配置文件类型枚举（如 YAML、PROPERTIES）
+     * @return {@code true} 表示支持该类型，{@code false} 表示不支持
+     * @see ConfigFileTypeEnum 配置文件类型枚举
      */
     boolean supports(ConfigFileTypeEnum type);
 
     /**
      * 解析配置内容字符串为键值对 Map
+     * <p>
+     * 将配置文件的文本内容解析为扁平化的键值对结构，支持嵌套属性的展开。
+     * 
+     * <p><b>解析示例：</b>
+     * <pre>
+     * 输入 YAML：
+     *   onethread:
+     *     executors:
+     *       - thread-pool-id: pool1
+     *         core-pool-size: 10
+     * 
+     * 输出 Map：
+     *   {
+     *     "onethread.executors[0].thread-pool-id": "pool1",
+     *     "onethread.executors[0].core-pool-size": 10
+     *   }
+     * </pre>
      *
-     * @param content 配置文件内容字符串
-     * @return 解析后的键值对 Map
-     * @throws IOException 解析失败时抛出
+     * @param content 配置文件的完整文本内容（如从 Nacos 拉取的 YAML 文本）
+     * @return 解析后的键值对 Map，键为扁平化的属性路径，值为配置值
+     * @throws IOException 当配置内容格式错误或解析失败时抛出
      */
     Map<Object, Object> doParse(String content) throws IOException;
 
     /**
      * 获取当前解析器支持的配置文件类型列表
+     * <p>
+     * 返回该解析器能够处理的所有配置文件格式。
+     * 一个解析器可以支持多种文件类型（例如 YAML 解析器可能同时支持 .yml 和 .yaml）。
      *
-     * @return 支持的配置文件类型集合
+     * @return 支持的配置文件类型集合，不会为 {@code null}
+     * @see ConfigFileTypeEnum 配置文件类型枚举
      */
     List<ConfigFileTypeEnum> getConfigFileTypes();
 }
