@@ -374,7 +374,7 @@ public interface NotifierService {
      *     
      *     @Override
      *     public void sendWebChangeMessage(WebThreadPoolConfigChangeDTO configChange) {
-         *         // 实现Web配置变更邮件发送
+     *         // 实现Web配置变更邮件发送
      *     }
      * }
      * }</pre>
@@ -383,66 +383,7 @@ public interface NotifierService {
      * @since 2025-05-03
      * @see DingTalkMessageService 钉钉通知服务实现
      * @see NotifierDispatcher 通知分发器
-     * @see AlarmRateLimiter 告警限流器
-     */
-public interface NotifierService {
-
-    /**
-     * 发送动态线程池配置变更通知
-     * <p>
-     * 当动态线程池的配置参数发生变更时，发送通知到指定的通知平台。
-     * 
-     * <p><b>实现要求：</b>
-     * <ul>
-     *   <li>根据通知平台类型，将 DTO 转换为平台支持的消息格式</li>
-     *   <li>发送通知到配置的接收人</li>
-     *   <li>发送失败应记录日志，但不抛出异常（避免影响主流程）</li>
-     *   <li>考虑异步发送（如果发送耗时较长）</li>
-     * </ul>
-     *
-     * @param configChange 配置变更信息对象，包含变更的所有详细数据
-     */
-    void sendChangeMessage(ThreadPoolConfigChangeDTO configChange);
-
-    /**
-     * 发送 Web 容器线程池配置变更通知
-     * <p>
-     * 当 Web 容器（Tomcat、Jetty 等）的线程池配置发生变更时，发送通知。
-     * 
-     * <p><b>实现要求：</b>
-     * <ul>
-     *   <li>格式化 Web 线程池配置变更消息</li>
-     *   <li>标识容器类型（Tomcat、Jetty 等）</li>
-     *   <li>发送到配置的接收人</li>
-     * </ul>
-     *
-     * @param configChange Web 线程池配置变更信息对象
-     */
-    void sendWebChangeMessage(WebThreadPoolConfigChangeDTO configChange);
-
-    /**
-     * 发送线程池运行时告警通知
-     * <p>
-     * 当线程池运行状态异常时，发送告警通知。
-     * 
-     * <p><b>实现要求：</b>
-     * <ul>
-     *   <li>调用 {@link ThreadPoolAlarmNotifyDTO#resolve()} 获取完整数据（延迟加载）</li>
-     *   <li>格式化告警消息（突出显示告警类型和关键指标）</li>
-     *   <li>发送前进行限流检查（通过 {@link AlarmRateLimiter}）</li>
-     *   <li>支持 @ 接收人功能（如果平台支持）</li>
-     *   <li>发送失败应记录日志，但不影响后续告警</li>
-     * </ul>
-     * 
-     * <p><b>告警消息格式建议：</b>
-     * <ul>
-     *   <li>使用醒目的标题（如红色字体）</li>
-     *   <li>包含完整的线程池状态</li>
-     *   <li>高亮显示异常指标</li>
-     *   <li>提供处理建议</li>
-     * </ul>
-     *
-     * @param alarm 告警信息对象，包含告警的所有数据
-     */
+ * @see AlarmRateLimiter 告警限流器
+ */
     void sendAlarmMessage(ThreadPoolAlarmNotifyDTO alarm);
 }
