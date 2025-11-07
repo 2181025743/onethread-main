@@ -53,6 +53,7 @@ import java.util.Map;
  * 基于模板方法模式抽象动态线程池刷新逻辑
  * <p>
  * 作者：杨潇
+ * 
  * 开发时间：2025-04-28
  */
 @Slf4j
@@ -89,15 +90,19 @@ public abstract class AbstractDynamicThreadPoolRefresher implements ApplicationR
 
     @SneakyThrows
     public void refreshThreadPoolProperties(String configInfo) {
-        Map<Object, Object> configInfoMap = ConfigParserHandler.getInstance().parseConfig(configInfo, properties.getConfigFileType());
+        Map<Object, Object> configInfoMap = ConfigParserHandler.getInstance().parseConfig(configInfo,
+                properties.getConfigFileType());
         ConfigurationPropertySource sources = new MapConfigurationPropertySource(configInfoMap);
         Binder binder = new Binder(sources);
-        BootstrapConfigProperties refresherProperties = binder.bind(BootstrapConfigProperties.PREFIX, Bindable.ofInstance(properties)).get();
+        BootstrapConfigProperties refresherProperties = binder
+                .bind(BootstrapConfigProperties.PREFIX, Bindable.ofInstance(properties)).get();
 
         // 发布线程池配置变更事件，触发所有监听器执行线程池参数对比与刷新操作
         // 当前支持的监听器包括：
-        // - {@link com.nageoffer.onethread.config.common.starter.refresher.DynamicThreadPoolRefreshListener}
-        // - {@link com.nageoffer.onethread.web.starter.core.WebThreadPoolRefreshListener}
+        // - {@link
+        // com.nageoffer.onethread.config.common.starter.refresher.DynamicThreadPoolRefreshListener}
+        // - {@link
+        // com.nageoffer.onethread.web.starter.core.WebThreadPoolRefreshListener}
         ApplicationContextHolder.getInstance().publishEvent(new ThreadPoolConfigUpdateEvent(this, refresherProperties));
     }
 }

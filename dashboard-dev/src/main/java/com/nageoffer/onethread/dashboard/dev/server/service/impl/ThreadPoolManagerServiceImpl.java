@@ -273,10 +273,9 @@ public class ThreadPoolManagerServiceImpl implements ThreadPoolManagerService {
         if (dot > 0) {
             name = name.substring(0, dot);
         }
-        // 常见前缀 onethread-
-        if (name.startsWith("onethread-")) {
-            name = name.substring("onethread-".length());
-        }
+        // 直接返回去除扩展名后的 dataId 作为服务名，不再去除前缀
+        // 修复前：onethread-simple-example.yaml → simple-example（错误）
+        // 修复后：onethread-simple-example.yaml → onethread-simple-example（正确）
         return name;
     }
 

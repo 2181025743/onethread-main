@@ -89,9 +89,9 @@ public class ThreadPoolExecutorProperties {
     private Long keepAliveTime;
 
     /**
-     * 是否允许核心线程超时
+     * 是否允许核心线程超时（默认不允许）
      */
-    private Boolean allowCoreThreadTimeOut;
+    private Boolean allowCoreThreadTimeOut = false;
 
     /**
      * 通知配置

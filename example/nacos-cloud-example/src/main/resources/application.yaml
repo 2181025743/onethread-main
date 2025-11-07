@@ -29,6 +29,13 @@ spring:
             group: DEFAULT_GROUP
             refresh: true
 
+# oneThread 框架配置
+onethread:
+  # Nacos 配置（关键：解决 NacosConfig 为 null 的问题）
+  nacos:
+    data-id: onethread-nacos-cloud-example.yaml  # 必须与 Nacos 配置文件的 Data ID 一致
+    group: DEFAULT_GROUP                          # 必须与 Nacos 配置文件的 Group 一致
+
 # 开启 actuator endpoint 指标暴露
 management:
   endpoints:
