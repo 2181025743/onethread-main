@@ -34,6 +34,7 @@
 
 package com.nageoffer.onethread.core.parser;
 
+import com.nageoffer.onethread.core.config.BootstrapConfigProperties;
 import lombok.Getter;
 
 /**
