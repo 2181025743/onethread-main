@@ -1,0 +1,51 @@
+server:
+  port: 18082
+
+spring:
+  application:
+    name: onethread-simple-example
+  config:
+    import: optional:nacos:onethread-simple-example.yaml
+  profiles:
+    active: dev
+
+  cloud:
+    nacos:
+      # 服务注册发现配置
+      discovery:
+        server-addr: 43.139.76.84:8848
+        username: nacos
+        password: A1472580369Z
+        namespace: onethread-dev
+      # 配置中心配置
+      config:
+        username: nacos
+        password: A1472580369Z
+        file-extension: yaml
+        namespace: onethread-dev
+        server-addr: 43.139.76.84:8848
+        extension-configs:
+          - data-id: onethread-simple-example.yaml
+            group: DEFAULT_GROUP
+            refresh: true
+
+# oneThread 框架配置
+onethread:
+  # Nacos 配置（关键：解决 NacosConfig 为 null 的问题）
+  nacos:
+    data-id: onethread-simple-example.yaml  # 必须与 Nacos 配置文件的 Data ID 一致
+    group: DEFAULT_GROUP                     # 必须与 Nacos 配置文件的 Group 一致
+
+# 开启 actuator endpoint 指标暴露
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - prometheus             # 暴露 Prometheus 端点
+  metrics:
+    prometheus:
+      metrics:
+        export:
+          enabled: true            # 启用 Prometheus 导出
+

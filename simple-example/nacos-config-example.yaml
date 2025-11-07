@@ -1,0 +1,76 @@
+# oneThread Simple Example Nacos Configuration
+#
+# Usage:
+# 1. Login to Nacos Console: http://43.139.76.84:8848/nacos
+#    Username: nacos
+#    Password: A1472580369Z
+#
+# 2. Go to "Configuration Management" -> "Configuration List"
+#
+# 3. Click "+" to create new configuration:
+#    - Data ID: onethread-simple-example.yaml
+#    - Group: DEFAULT_GROUP
+#    - Format: YAML
+#    - Namespace: onethread-dev
+#    - Content: Copy configuration below
+#
+# 4. After saving, the application will automatically load this configuration from Nacos
+
+# IMPORTANT: App name must match the service name registered in Nacos
+appName: onethread-simple-example
+
+# oneThread Framework Configuration
+onethread:
+  config-file-type: yaml
+
+  # Web Container Thread Pool Configuration (Tomcat/Jetty)
+  web:
+    core-pool-size: 10
+    maximum-pool-size: 200
+    keep-alive-time: 60
+
+  # Alarm Notification Configuration (DingTalk Robot)
+  notify-platforms:
+    - platform: DING
+      url: https://oapi.dingtalk.com/robot/send?access_token=YOUR_ACCESS_TOKEN
+      secret: YOUR_SECRET
+
+  # Dynamic Thread Pool Configuration
+  executors:
+    # Business Thread Pool
+    - thread-pool-id: business-thread-pool
+      core-pool-size: 5
+      maximum-pool-size: 10
+      queue-capacity: 100
+      work-queue: ResizableCapacityLinkedBlockingQueue
+      rejected-handler: CallerRunsPolicy
+      keep-alive-time: 60
+      allow-core-thread-time-out: false
+
+      # Alarm Configuration
+      alarm:
+        enable: true
+        queue-threshold: 80
+        active-threshold: 80
+
+    # Notification Thread Pool
+    - thread-pool-id: notify-thread-pool
+      core-pool-size: 2
+      maximum-pool-size: 5
+      queue-capacity: 50
+      work-queue: LinkedBlockingQueue
+      rejected-handler: AbortPolicy
+      keep-alive-time: 60
+      alarm:
+        enable: true
+        queue-threshold: 70
+        active-threshold: 70
+
+# Logging Configuration (Optional)
+logging:
+  level:
+    root: INFO
+    com.example.onethread: DEBUG
+    com.nageoffer.onethread: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
