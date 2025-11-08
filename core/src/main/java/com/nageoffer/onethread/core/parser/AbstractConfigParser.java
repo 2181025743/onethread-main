@@ -35,52 +35,13 @@
 package com.nageoffer.onethread.core.parser;
 
 /**
- * 配置解析器抽象基类
+ * 配置解析器抽象类
  * <p>
- * 该抽象类为所有配置解析器提供通用的实现逻辑，减少子类的重复代码。
- * 子类只需实现 {@link #doParse(String)} 和 {@link #getConfigFileTypes()} 方法即可。
- * 
- * <p><b>设计目的：</b>
- * <ul>
- *   <li>提供 {@link #supports(ConfigFileTypeEnum)} 方法的默认实现</li>
- *   <li>统一解析器的类型判断逻辑</li>
- *   <li>简化子类的实现复杂度</li>
- * </ul>
- * 
- * <p><b>设计模式：</b>模板方法模式（Template Method Pattern）
- * <br>在抽象类中定义算法骨架（supports方法），具体实现由子类完成
- * 
- * <p><b>继承关系：</b>
- * <pre>
- * AbstractConfigParser (抽象类)
- *    ├─ YamlConfigParser (YAML解析器)
- *    └─ PropertiesConfigParser (Properties解析器)
- * </pre>
- * 
- * @author 杨潇
- * @since 2025-04-23
- * @see ConfigParser 配置解析器接口
- * @see YamlConfigParser YAML解析器实现
- * @see PropertiesConfigParser Properties解析器实现
+ * 作者：杨潇
+ * 开发时间：2025-04-23
  */
 public abstract class AbstractConfigParser implements ConfigParser {
 
-    /**
-     * 判断当前解析器是否支持指定类型的配置文件解析
-     * <p>
-     * 该方法通过检查子类返回的支持类型列表来判断是否支持目标类型。
-     * 这是一个模板方法，子类无需重写。
-     * 
-     * <p><b>实现逻辑：</b>
-     * <ol>
-     *   <li>调用子类实现的 {@link #getConfigFileTypes()} 获取支持的类型列表</li>
-     *   <li>检查列表中是否包含目标类型</li>
-     *   <li>返回判断结果</li>
-     * </ol>
-     *
-     * @param type 配置文件类型枚举（如 YAML、PROPERTIES）
-     * @return {@code true} 表示支持该类型，{@code false} 表示不支持
-     */
     @Override
     public boolean supports(ConfigFileTypeEnum type) {
         return getConfigFileTypes().contains(type);
