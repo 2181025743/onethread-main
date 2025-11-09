@@ -34,6 +34,9 @@
 
 package com.nageoffer.onethread.core.executor.support;
 
+import lombok.NonNull;
+
+import java.io.Serial;
 import java.util.AbstractQueue;
 import java.util.Collection;
 import java.util.Iterator;
@@ -78,6 +81,7 @@ public class ResizableCapacityLinkedBlockingQueue<E> extends AbstractQueue<E>
         BlockingQueue<E>,
         java.io.Serializable {
 
+    @Serial
     private static final long serialVersionUID = -6903933977591709194L;
 
     /*
@@ -180,7 +184,7 @@ public class ResizableCapacityLinkedBlockingQueue<E> extends AbstractQueue<E>
      * @param x 要插入的项
      */
     private void insert(E x) {
-        last = last.next = new Node<E>(x);
+        last = last.next = new Node<>(x);
     }
 
     /**
@@ -230,7 +234,7 @@ public class ResizableCapacityLinkedBlockingQueue<E> extends AbstractQueue<E>
             throw new IllegalArgumentException();
         }
         this.capacity = capacity;
-        last = head = new Node<E>(null);
+        last = head = new Node<>(null);
     }
 
     /**
@@ -296,13 +300,10 @@ public class ResizableCapacityLinkedBlockingQueue<E> extends AbstractQueue<E>
      * @throws NullPointerException 如果指定元素为 <tt>null</tt>。
      */
     @Override
-    public void put(E o) throws InterruptedException {
-        if (o == null) {
-            throw new NullPointerException();
-        }
+    public void put(@NonNull E o) throws InterruptedException {
         // 注意：在所有 put/take/etc 中的约定是预设
         // 持有计数的局部变量为负值以表示失败，除非被设置。
-        int c = -1;
+        int c;
         final ReentrantLock putLock = this.putLock;
         final AtomicInteger count = this.count;
         putLock.lockInterruptibly();
@@ -345,13 +346,13 @@ public class ResizableCapacityLinkedBlockingQueue<E> extends AbstractQueue<E>
      * @throws NullPointerException 如果指定元素为 <tt>null</tt>。
      */
     @Override
-    public boolean offer(E o, long timeout, TimeUnit unit) throws InterruptedException {
+    public boolean offer(E o, long timeout, @NonNull TimeUnit unit) throws InterruptedException {
 
         if (o == null) {
             throw new NullPointerException();
         }
         long nanos = unit.toNanos(timeout);
-        int c = -1;
+        int c;
         final ReentrantLock putLock = this.putLock;
         final AtomicInteger count = this.count;
         putLock.lockInterruptibly();
@@ -392,10 +393,7 @@ public class ResizableCapacityLinkedBlockingQueue<E> extends AbstractQueue<E>
      * @throws NullPointerException 如果指定元素为 <tt>null</tt>
      */
     @Override
-    public boolean offer(E o) {
-        if (o == null) {
-            throw new NullPointerException();
-        }
+    public boolean offer(@NonNull E o) {
         final AtomicInteger count = this.count;
         if (count.get() >= capacity) {
             return false;
@@ -423,7 +421,7 @@ public class ResizableCapacityLinkedBlockingQueue<E> extends AbstractQueue<E>
     @Override
     public E take() throws InterruptedException {
         E x;
-        int c = -1;
+        int c;
         final AtomicInteger count = this.count;
         final ReentrantLock takeLock = this.takeLock;
         takeLock.lockInterruptibly();
@@ -453,8 +451,8 @@ public class ResizableCapacityLinkedBlockingQueue<E> extends AbstractQueue<E>
 
     @Override
     public E poll(long timeout, TimeUnit unit) throws InterruptedException {
-        E x = null;
-        int c = -1;
+        E x;
+        int c;
         long nanos = unit.toNanos(timeout);
         final AtomicInteger count = this.count;
         final ReentrantLock takeLock = this.takeLock;
@@ -624,10 +622,7 @@ public class ResizableCapacityLinkedBlockingQueue<E> extends AbstractQueue<E>
     }
 
     @Override
-    public int drainTo(Collection<? super E> c) {
-        if (c == null) {
-            throw new NullPointerException();
-        }
+    public int drainTo(@NonNull Collection<? super E> c) {
         if (c == this) {
             throw new IllegalArgumentException();
         }
@@ -653,10 +648,7 @@ public class ResizableCapacityLinkedBlockingQueue<E> extends AbstractQueue<E>
     }
 
     @Override
-    public int drainTo(Collection<? super E> c, int maxElements) {
-        if (c == null) {
-            throw new NullPointerException();
-        }
+    public int drainTo(@NonNull Collection<? super E> c, int maxElements) {
         if (c == this) {
             throw new IllegalArgumentException();
         }
@@ -796,6 +788,7 @@ public class ResizableCapacityLinkedBlockingQueue<E> extends AbstractQueue<E>
      * @serialData 发出容量（int），然后是所有元素（每个都是 <tt>Object</tt>）
      * 按适当顺序排列，最后是一个 null
      */
+    @Serial
     private void writeObject(java.io.ObjectOutputStream s) throws java.io.IOException {
 
         fullyLock();
@@ -819,12 +812,13 @@ public class ResizableCapacityLinkedBlockingQueue<E> extends AbstractQueue<E>
      *
      * @param s 流
      */
+    @Serial
     private void readObject(java.io.ObjectInputStream s) throws java.io.IOException, ClassNotFoundException {
         // 读取容量和任何隐藏内容
         s.defaultReadObject();
 
         count.set(0);
-        last = head = new Node<E>(null);
+        last = head = new Node<>(null);
 
         // 读取所有元素并放入队列
         for (; ; ) {
