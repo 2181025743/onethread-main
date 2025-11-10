@@ -1,4 +1,3 @@
-### IntelliJ IDEA ###
 target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
@@ -15,7 +14,6 @@ target/
 
 ### IntelliJ IDEA ###
 .idea
-!.idea/icon.png
 *.iws
 *.iml
 *.ipr
@@ -33,7 +31,10 @@ build/
 ### VS Code ###
 .vscode/
 
-### Sensitive files ###
-user.md
-temp-config.yaml
-nul
+### Mac ###
+.DS_Store
+
+### Log ###
+logs/
+*.log
+
