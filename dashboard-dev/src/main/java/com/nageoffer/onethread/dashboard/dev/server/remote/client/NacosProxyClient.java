@@ -1,37 +1,3 @@
-/*
- * 动态线程池（oneThread）基础组件项目
- *
- * 版权所有 (C) [2024-至今] [山东流年网络科技有限公司]
- *
- * 保留所有权利。
- *
- * 1. 定义和解释
- *    本文件（包括其任何修改、更新和衍生内容）是由[山东流年网络科技有限公司]及相关人员开发的。
- *    "软件"指的是与本文件相关的任何代码、脚本、文档和相关的资源。
- *
- * 2. 使用许可
- *    本软件的使用、分发和解释均受中华人民共和国法律的管辖。只有在遵守以下条件的前提下，才允许使用和分发本软件：
- *    a. 未经[山东流年网络科技有限公司]的明确书面许可，不得对本软件进行修改、复制、分发、出售或出租。
- *    b. 任何未授权的复制、分发或修改都将被视为侵犯[山东流年网络科技有限公司]的知识产权。
- *
- * 3. 免责声明
- *    本软件按"原样"提供，没有任何明示或暗示的保证，包括但不限于适销性、特定用途的适用性和非侵权性的保证。
- *    在任何情况下，[山东流年网络科技有限公司]均不对任何直接、间接、偶然、特殊、典型或间接的损害（包括但不限于采购替代商品或服务；使用、数据或利润损失）承担责任。
- *
- * 4. 侵权通知与处理
- *    a. 如果[山东流年网络科技有限公司]发现或收到第三方通知，表明存在可能侵犯其知识产权的行为，公司将采取必要的措施以保护其权利。
- *    b. 对于任何涉嫌侵犯知识产权的行为，[山东流年网络科技有限公司]可能要求侵权方立即停止侵权行为，并采取补救措施，包括但不限于删除侵权内容、停止侵权产品的分发等。
- *    c. 如果侵权行为持续存在或未能得到妥善解决，[山东流年网络科技有限公司]保留采取进一步法律行动的权利，包括但不限于发出警告信、提起民事诉讼或刑事诉讼。
- *
- * 5. 其他条款
- *    a. [山东流年网络科技有限公司]保留随时修改这些条款的权利。
- *    b. 如果您不同意这些条款，请勿使用本软件。
- *
- * 未经[山东流年网络科技有限公司]的明确书面许可，不得使用此文件的任何部分。
- *
- * 本软件受到[山东流年网络科技有限公司]及其许可人的版权保护。
- */
-
 package com.nageoffer.onethread.dashboard.dev.server.remote.client;
 
 import cn.hutool.http.HttpRequest;
@@ -42,10 +8,12 @@ import com.nageoffer.onethread.dashboard.dev.server.remote.dto.NacosConfigDetail
 import com.nageoffer.onethread.dashboard.dev.server.remote.dto.NacosConfigListRespDTO;
 import com.nageoffer.onethread.dashboard.dev.server.remote.dto.NacosConfigRespDTO;
 import com.nageoffer.onethread.dashboard.dev.server.remote.dto.NacosServiceListRespDTO;
+import com.nageoffer.onethread.dashboard.dev.server.remote.dto.NacosServiceRespDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,10 +21,23 @@ import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * Nacos 代理客户端
+ * Nacos 代理客户端 - 混合使用 Nacos v3 Admin API 和 Client API
+ * <p>
+ * API 使用策略：
+ * - 配置管理（列表、发布）：使用 Admin API (/nacos/v3/admin/cs/...)
+ * - 服务发现（实例查询）：使用 Client API (/nacos/v3/client/ns/...)
+ * <p>
+ * 原因：
+ * - Client API 不支持配置列表查询和发布操作
+ * - Client API 的服务实例查询返回格式更简洁（data 直接是数组）
+ * <p>
+ * 参考文档：
+ * - Admin API: https://nacos.io/docs/latest/manual/admin/admin-api/
+ * - Client API: https://nacos.io/docs/latest/guide/user/open-api/
  * <p>
  * 作者：杨潇
  * 开发时间：2025-05-18
+ * 重构时间：2025-10-31 (升级到 Nacos v3 混合 API)
  */
 @Slf4j
 @Component
@@ -179,15 +160,43 @@ public class NacosProxyClient {
     }
 
     /**
+     * 解析 Nacos v3 API 响应并提取 data 字段
+     *
+     * @param result   HTTP 响应体
+     * @param apiName  API 名称（用于日志）
+     * @return data 字段的 JSONObject
+     */
+    private JSONObject parseV3Response(String result, String apiName) {
+        JSONObject responseJson = JSON.parseObject(result);
+        Integer code = responseJson.getInteger("code");
+
+        if (code == null || code != 0) {
+            String message = responseJson.getString("message");
+            log.error("{} failed. Code: {}, Message: {}", apiName, code, message);
+            throw new RuntimeException(String.format("%s failed: %s (code: %d)", apiName, message, code));
+        }
+
+        JSONObject data = responseJson.getJSONObject("data");
+        if (data == null) {
+            log.error("{} response missing 'data' field: {}", apiName, result);
+            throw new RuntimeException(String.format("%s response format invalid", apiName));
+        }
+
+        return data;
+    }
+
+    /**
      * 查询命名空间下配置文件集合
+     * <p>
+     * Nacos v3 Admin API: GET /nacos/v3/admin/cs/config/list
      *
      * @param namespace 命名空间
      * @return 配置文件集合
      */
     public List<NacosConfigRespDTO> listConfig(String namespace) {
-        ensureToken(); // 确保 token 有效
+        ensureToken();
 
-        // Nacos 3.x 使用 v3 admin API
+        // Nacos v3 Admin API
         String url = serverAddr + "/nacos/v3/admin/cs/config/list";
 
         HttpRequest request = HttpRequest.get(url)
@@ -204,20 +213,15 @@ public class NacosProxyClient {
             throw new RuntimeException("Nacos server returned error: " + response.getStatus());
         }
 
-        // Nacos 3.x 返回格式: {"code":0,"message":"success","data":{...}}
-        JSONObject responseJson = JSON.parseObject(result);
-        JSONObject data = responseJson.getJSONObject("data");
-        if (data == null) {
-            log.error("Nacos response missing 'data' field: {}", result);
-            throw new RuntimeException("Invalid Nacos response format");
-        }
-        
+        JSONObject data = parseV3Response(result, "listConfig");
         NacosConfigListRespDTO nacosRemoteResult = data.toJavaObject(NacosConfigListRespDTO.class);
         return nacosRemoteResult.getPageItems();
     }
 
     /**
      * 查询配置明细信息
+     * <p>
+     * Nacos v3 Admin API: GET /nacos/v3/admin/cs/config
      *
      * @param namespace 命名空间
      * @param dataId    数据 ID
@@ -227,10 +231,9 @@ public class NacosProxyClient {
     public NacosConfigDetailRespDTO getConfig(String namespace, String dataId, String group) {
         ensureToken();
 
-        // Nacos 3.x 使用 v3 admin API
+        // Nacos v3 Admin API
         String url = serverAddr + "/nacos/v3/admin/cs/config";
 
-        // 构建请求并发送
         HttpRequest request = HttpRequest.get(url)
                 .form("dataId", dataId)
                 .form("groupName", group)
@@ -241,35 +244,33 @@ public class NacosProxyClient {
 
         String result = response.body();
         if (!response.isOk()) {
-            log.error("Failed to get config from Nacos. Status: {}, dataId: {}, group: {}, namespace: {}", 
+            log.error("Failed to get config from Nacos. Status: {}, dataId: {}, group: {}, namespace: {}",
                     response.getStatus(), dataId, group, namespace);
             throw new RuntimeException("Nacos server returned error: " + response.getStatus());
         }
 
-        // Nacos 3.x 返回格式: {"code":0,"message":"success","data":{...}}
-        JSONObject responseJson = JSON.parseObject(result);
-        JSONObject data = responseJson.getJSONObject("data");
-        if (data == null) {
-            log.error("Nacos response missing 'data' field: {}", result);
-            throw new RuntimeException("Invalid Nacos response format");
-        }
-        
+        JSONObject data = parseV3Response(result, "getConfig");
         return data.toJavaObject(NacosConfigDetailRespDTO.class);
     }
 
     /**
-     * 发布配置
+     * 发布/更新配置
+     * <p>
+     * Nacos v3 Admin API: POST /nacos/v3/admin/cs/config
      *
      * @param namespace   命名空间
      * @param dataId      数据 ID
      * @param group       分组标识
+     * @param appName     应用名称
+     * @param id          配置 ID
+     * @param md5         配置内容的 MD5 值
      * @param content     配置文件内容
-     * @param contentType 配置文件内容文件格式
+     * @param contentType 配置文件格式 (yaml/properties/json/xml/text/html)
      */
     public void publishConfig(String namespace, String dataId, String group, String appName, String id, String md5, String content, String contentType) {
         ensureToken();
 
-        // Nacos 3.x 使用 v3 admin API
+        // Nacos v3 Admin API
         String url = serverAddr + "/nacos/v3/admin/cs/config";
 
         Map<String, Object> form = new HashMap<>();
@@ -285,20 +286,31 @@ public class NacosProxyClient {
             form.put("accessToken", accessToken);
         }
 
-        // 发起 POST 请求
         HttpResponse response = HttpRequest.post(url)
                 .form(form)
                 .execute();
 
         if (!response.isOk()) {
-            log.error("Failed to publish config to Nacos. Status: {}, dataId: {}, group: {}, namespace: {}", 
+            log.error("Failed to publish config to Nacos. Status: {}, dataId: {}, group: {}, namespace: {}",
                     response.getStatus(), dataId, group, namespace);
             throw new RuntimeException("Nacos server returned error: " + response.getStatus());
+        }
+
+        // 检查返回结果
+        String result = response.body();
+        try {
+            parseV3Response(result, "publishConfig");
+            log.info("Successfully published config: dataId={}, group={}, namespace={}", dataId, group, namespace);
+        } catch (Exception e) {
+            log.warn("Config published but response validation failed: {}", e.getMessage());
         }
     }
 
     /**
-     * 查询命名空间下服务明细
+     * 查询命名空间下服务实例列表
+     * <p>
+     * Nacos v3 Client API: GET /nacos/v3/client/ns/instance/list
+     * 文档: https://nacos.io/docs/latest/manual/admin/admin-api/#4%EF%B8%8F%E2%83%A3-%E6%9F%A5%E8%AF%A2%E6%9F%90%E4%B8%AA%E6%9C%8D%E5%8A%A1%E7%9A%84%E5%AE%9E%E4%BE%8B%E5%88%97%E8%A1%A8
      *
      * @param namespace   命名空间
      * @param serviceName 服务名
@@ -307,28 +319,55 @@ public class NacosProxyClient {
     public NacosServiceListRespDTO getService(String namespace, String serviceName) {
         ensureToken();
 
-        // Nacos 3.x 可继续使用 v2 ns API
-        String url = serverAddr + "/nacos/v2/ns/catalog/instances";
+        // Nacos v3 Client API
+        String url = serverAddr + "/nacos/v3/client/ns/instance/list";
 
         HttpRequest request = HttpRequest.get(url)
-                .form("pageNo", "1")
-                .form("pageSize", "100") // 默认单个 service 最大 100 条数据,如果超过写个 while 循环读取即可
-                .form("clusterName", "DEFAULT")
-                .form("groupName", "DEFAULT_GROUP")
                 .form("serviceName", serviceName)
-                .form("namespaceId", Objects.equals(namespace, "public") ? "" : namespace);
+                .form("namespaceId", Objects.equals(namespace, "public") ? "" : namespace)
+                .form("groupName", "DEFAULT_GROUP")
+                .form("clusterName", "DEFAULT");
 
         HttpResponse response = withAuth(request).execute();
 
         String result = response.body();
         if (!response.isOk()) {
-            log.warn("Failed to get service from Nacos. Status: {}, serviceName: {}, namespace: {}", 
+            log.warn("Failed to get service from Nacos. Status: {}, serviceName: {}, namespace: {}",
                     response.getStatus(), serviceName, namespace);
             return NacosServiceListRespDTO.builder()
                     .count(0)
                     .build();
         }
 
-        return JSON.parseObject(result, NacosServiceListRespDTO.class);
+        try {
+            JSONObject responseJson = JSON.parseObject(result);
+            Integer code = responseJson.getInteger("code");
+
+            if (code == null || code != 0) {
+                log.warn("Nacos service query failed. serviceName: {}, namespace: {}, code: {}, response: {}",
+                        serviceName, namespace, code, result);
+                return NacosServiceListRespDTO.builder()
+                        .count(0)
+                        .build();
+            }
+
+            // Nacos v3 Client API 返回的 data 是数组，而不是对象
+            List<NacosServiceRespDTO> serviceList = responseJson.getList("data", NacosServiceRespDTO.class);
+            if (serviceList == null) {
+                serviceList = new ArrayList<>();
+            }
+
+            return NacosServiceListRespDTO.builder()
+                    .count(serviceList.size())
+                    .serviceList(serviceList)
+                    .build();
+
+        } catch (Exception e) {
+            log.warn("Failed to parse service response. serviceName: {}, namespace: {}, error: {}",
+                    serviceName, namespace, e.getMessage());
+            return NacosServiceListRespDTO.builder()
+                    .count(0)
+                    .build();
+        }
     }
 }
