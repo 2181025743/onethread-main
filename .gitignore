@@ -33,7 +33,16 @@ build/
 ### VS Code ###
 .vscode/
 
-### Sensitive files ###
+### Sensitive and non-project files ###
 user.md
 temp-config.yaml
 nul
+
+### Documentation and scripts (non-core) ###
+.lingma/
+WARP.md
+提示词.md
+simple-example/
+*.bat
+*.sh
+**/1.txt
