@@ -40,8 +40,10 @@ nul
 
 ### Documentation and scripts (non-core) ###
 .lingma/
+.claude/
 WARP.md
 提示词.md
+oneThread学习指南.md
 simple-example/
 *.bat
 *.sh
