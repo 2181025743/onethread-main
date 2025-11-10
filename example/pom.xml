@@ -12,6 +12,5 @@
 
     <modules>
         <module>nacos-cloud-example</module>
-        <module>apollo-example</module>
     </modules>
 </project>
