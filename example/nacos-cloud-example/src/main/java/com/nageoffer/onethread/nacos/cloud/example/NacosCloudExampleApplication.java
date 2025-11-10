@@ -27,6 +27,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class NacosCloudExampleApplication {
 
+
     public static void main(String[] args) {
         SpringApplication.run(NacosCloudExampleApplication.class, args);
     }
